@@ -1,0 +1,36 @@
+# Arquivos do ambiente virtual Python
+venv/
+.env/
+
+# Arquivos de configuração sensíveis
+.env
+*.env
+config.py
+
+# Arquivos gerados pelo sistema
+*.csv
+*.log
+*.tmp
+*.bak
+
+# Arquivos do IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.code-workspace
+
+# Arquivos do Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Arquivos do Jupyter Notebook
+.ipynb_checkpoints/
+
+# Arquivos do macOS
+.DS_Store
+
+# Arquivos do Windows
+Thumbs.db
