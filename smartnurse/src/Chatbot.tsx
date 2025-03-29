@@ -10,42 +10,57 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState<string>("");
   const [isBotWriting, setIsBotWriting] = useState<boolean>(false);
-
+  const [initialMessageSent, setInitialMessageSent] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!initialMessageSent) {
+      const initialMessage =
+        "Olá! Em que posso ajudar? Pergunte-me sobre qualquer coisa relacionada à saúde.";
+      setMessages([{ user: "", bot: initialMessage }]);
+      setInitialMessageSent(true);
+    }
+  }, [initialMessageSent]);
 
   const handleSendMessage = () => {
     if (input) {
-      const newBotMessage = "I am analyzing your message.";
-      setMessages([...messages, { user: input, bot: "" }]);
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, { user: input, bot: "" }];
+        return updatedMessages;
+      });
       setInput("");
       setIsBotWriting(true);
+
+      let botResponse =
+        "Desculpe, não entendi. Pode reformular a sua pergunta?";
 
       let index = 0;
       const interval = setInterval(() => {
         setMessages((prevMessages) => {
           const updatedMessages = [...prevMessages];
-          updatedMessages[updatedMessages.length - 1].bot = newBotMessage.slice(
+          updatedMessages[updatedMessages.length - 1].bot = botResponse.slice(
             0,
             index + 1
           );
           return updatedMessages;
         });
         index += 1;
-        if (index === newBotMessage.length) {
+        if (index === botResponse.length) {
           clearInterval(interval);
           setIsBotWriting(false);
         }
       }, 50);
+
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     }
   };
 
   const deleteMessage = () => {
     if (!isBotWriting) {
       setMessages([]);
+      setInitialMessageSent(false);
     }
   };
 
@@ -59,14 +74,21 @@ function App() {
         <div className="messages">
           {messages.map((msg, idx) => (
             <div key={idx} className="message">
-              <div className="user-message">{msg.user}</div>
-              <div className="bot-message">
-                <img src="./src/bot-image.png" alt="Bot" />
-                <div className="bot-text">
-                  <strong>Bot: </strong>
-                  {msg.bot}
+              {msg.user && (
+                <div className="user-message">
+                  <strong>Você: </strong>
+                  {msg.user}
                 </div>
-              </div>
+              )}
+              {msg.bot && (
+                <div className="bot-message">
+                  <img src="./src/bot-image.png" alt="Bot" />
+                  <div className="bot-text">
+                    <strong>Bot: </strong>
+                    {msg.bot}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           <div ref={messagesEndRef} />
@@ -89,7 +111,7 @@ function App() {
               handleSendMessage();
             }
           }}
-          placeholder="Type your message here..."
+          placeholder="Pergunte sobre algo relacionado à saúde..."
         />
         <button onClick={handleSendMessage}>➤</button>
       </div>

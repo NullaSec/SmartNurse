@@ -12,7 +12,7 @@
   }
   
   .borda {
-    position: relative; /* Para posicionar o balão dentro desse contêiner */
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -35,23 +35,66 @@
     left: 80%;
     background: #27bad4;
     color: white;
-    padding: 30px 200px;
+    padding: 15px 50px;
     border-radius: 15px;
     font-size: 14px;
-    max-width: 150px;
-    text-align: center;
+    width: 300px;
+    max-width: 600px;
+    text-align: left; 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease-in-out, pulse 2s infinite;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
   }
   
   .speech-bubble::after {
     content: "";
     position: absolute;
-    top: 80%;
+    top: 50%;
     right: 100%;
     transform: translateY(-50%);
     border-width: 8px;
     border-style: solid;
     border-color: transparent #27bad4 transparent transparent;
+    outline: none;
+    box-shadow: none;
+  }
+  
+  .speech-bubble-message {
+    align-self: flex-start; 
+    padding: 5px;
+    font-size: 14px;
+    margin-left: -35px;
+    margin-top: -10px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.03);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
   
   .chat-button {

@@ -82,8 +82,8 @@ body {
     overflow-wrap: break-word;
     display: flex;
     align-items: center;
-    word-break: break-all;  
-    white-space: normal;
+    word-break: break-word;  
+    white-space: pre-line;
   }
   
 
@@ -108,7 +108,7 @@ body {
     border-radius: 20px;
     font-size: 1rem;
     color: #ffffff;
-    background-color: #b1bbbb;
+    background-color: #ccd5d5;
     outline: none;
     border: 2px solid transparent;
   }
