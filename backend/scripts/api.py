@@ -10,10 +10,20 @@ with s2.connect(
 
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM fake_patients_en ORDER BY id ASC LIMIT 5;")
-        results = cur.fetchall()
+        Pacient_results = cur.fetchall()
         
-    for pacient in results:
-        for parameter in pacient:
+        cur.execute("SELECT * FROM fake_doctors_en ORDER BY id ASC LIMIT 5;")
+        Doctors_results = cur.fetchall()
+
+    for doctor in Doctors_results:
+        for parameter in doctor:
             print(parameter)
             print("\n")
-        print("-" * 50 + "\n")
+        print("-" * 50 + "\n")        
+
+    # for pacient in Pacient_results:
+    #     for parameter in pacient:
+    #         print(parameter)
+    #         print("\n")
+    #     print("-" * 50 + "\n")
+
