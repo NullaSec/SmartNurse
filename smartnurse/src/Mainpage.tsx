@@ -8,7 +8,7 @@ function Home() {
 
   useEffect(() => {
     const text =
-      "Como é que é maltinha daqui com vocês é o RIIIIIIC DA FAZERESSSS! Está tudo bem contigo ou não queres dizer ao zé ric.";
+      "Sou um assistente virtual desenvolvido para esclarecer as tuas dúvidas sobre saúde e oferecer-te um diagnóstico rápido. Se tiveres questões sobre doenças, sintomas ou tratamentos, estou aqui para te ajudar de forma simples e eficaz!";
     let index = 0;
 
     const interval = setInterval(() => {
@@ -30,10 +30,21 @@ function Home() {
             <div className="speech-bubble-message">{message}</div>
           </div>
         </div>
-        <p>Click the button below to start the chatbot.</p>
-        <button onClick={() => navigate("/chat")} className="chat-button">
-          ChatBot
-        </button>
+        <p>Click a button below to start a chatbot.</p>
+        <div className="button-container">
+          <button
+            onClick={() => navigate("/smartDiag")}
+            className="chat-button"
+          >
+            SmartDiag
+          </button>
+          <button
+            onClick={() => navigate("/medSchool")}
+            className="chat-button"
+          >
+            MedSchool
+          </button>
+        </div>
       </div>
     </div>
   );

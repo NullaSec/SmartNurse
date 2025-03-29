@@ -25,11 +25,11 @@ body {
     color: #f0f0f0;
   }
   
-  .chatbox {
+  .chatbox2 {
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border: 2px solid #27bad4;
-    background: linear-gradient(to bottom, #004a6a, #0189c4);
+    background: linear-gradient(to bottom, #07525f, #0c7588);
     padding: 20px;
     width: 700px;
     max-width: 700px;
@@ -164,7 +164,7 @@ body {
   .back-button {
     position: absolute;
     top: 10px;
-    left: 30px;
+    left: 10px;
     color: white;
     border: none;
     border-radius: 10px;
@@ -174,22 +174,6 @@ body {
   }
   
   .back-button:hover {
-    background-color: #e1b457;
-  }
-
-  .diagnosis-button{
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-
-  .diagnosis-button:hover {
     background-color: #e1b457;
   }
   

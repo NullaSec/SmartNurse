@@ -11,7 +11,7 @@
     margin-top: -20px;
   }
   
-  .borda {
+  .borda {  
     position: relative;
     display: flex;
     justify-content: center;
@@ -97,17 +97,26 @@
     }
   }
   
+  .button-container {
+    display: flex;
+    gap: 20px; 
+    justify-content: center;
+    margin-top: 15px;
+  }
+  
   .chat-button {
-    padding: 10px 20px;
+    padding: 20px 20px;
     font-size: 16px;
-    background-color: #27bad4;
+    background-color: #1a7c8d;
+    margin-top: -20px;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
+    transition: 0.3s ease-in-out;
   }
   
   .chat-button:hover {
-    background-color: #0056b3;
+    background-color: #e1b457;
   }
   
