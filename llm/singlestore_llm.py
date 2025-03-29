@@ -5,6 +5,8 @@ from typing import List, Dict, Union
 import logging
 from pydantic import BaseModel, field_validator
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configuração
 logging.basicConfig(level=logging.INFO)
@@ -96,19 +98,52 @@ class PatientChatbot:
             if match:
                 results.append(patient)
         return results
+    
+    def ask_general_question(self, question: str) -> str:
+        """Responde perguntas médicas genéricas não relacionadas a pacientes específicos"""
+        prompt = f"""Você é um assistente médico especializado. Responda de forma:
+        - Clara e concisa (máx. 3 frases)
+        - Baseada em evidências científicas
+        - Com alertas quando necessário
+        - Sem observações desnecessárias
+
+        Pergunta: {question}"""
+
+        try:
+            response = self._ask_llm(prompt)
+            if response:
+                return response
+            
+            # Fallback para perguntas comuns
+            common_answers = {
+                "o que é diabetes": "Diabetes é uma condição crônica onde o corpo não regula bem o açúcar no sangue. Existem tipos 1 e 2, com causas e tratamentos diferentes.",
+                "sintomas de infarto": "Principais sintomas: dor no peito, falta de ar, sudorese. ⚠️ Se suspeitar, busque ajuda IMEDIATAMENTE.",
+                "como medir pressão arterial": "Use um esfigmomanômetro no braço, sentado e em repouso. Valores normais: ~120/80 mmHg."
+            }
+            
+            for q, ans in common_answers.items():
+                if q in question.lower():
+                    return ans
+                    
+            return "ℹ️ Consulte um médico para orientações precisas sobre este tema."
+        
+        except Exception as e:
+            logger.error(f"Erro: {str(e)}")
+            return "🔴 Serviço indisponível no momento."
 
     def interactive_cli(self):
         """Interface de linha de comando"""
-        print(f"\n💊 Assistente Médico - {len(self.patients)} pacientes carregados")
+        print(f"\n 👨🏼‍⚕️ Assistente Médico - {len(self.patients)} pacientes carregados")
         
         while True:
             print("\nMENU PRINCIPAL:")
-            print("1. Buscar pacientes por critérios")
-            print("2. Fazer pergunta sobre pacientes")
-            print("3. Analisar interações medicamentosas")
-            print("4. Sair")
+            print("1. Buscar pacientes")
+            print("2. Compatibilidade de Medicamentos")
+            print("3. Verificar interações medicamentosas")
+            print("4. Perguntas médicas gerais")
+            print("5. Sair")
             
-            choice = input("Escolha uma opção: ").strip()
+            choice = input("Escolha: ").strip()
             
             if choice == "1":
                 self._search_mode()
@@ -117,10 +152,13 @@ class PatientChatbot:
             elif choice == "3":
                 self._check_medication_interactions()
             elif choice == "4":
-                print("Encerrando...")
+                question = input("\nDigite sua pergunta médica geral: ")
+                print("\nA gerar resposta...")
+                print(self.ask_general_question(question))
+            elif choice == "5":
                 break
             else:
-                print("Opção inválida. Tente novamente.")
+                print("Opção inválida.")
 
     def _search_mode(self):
         """Modo de busca por filtros"""
@@ -146,48 +184,59 @@ class PatientChatbot:
             print(f"❌ Erro na busca: {str(e)}")
 
     def _question_mode(self):
-        """Modo de perguntas sobre pacientes"""
-        question = input("\n📝 Sua pergunta médica (ex: 'Quais pacientes têm risco cardíaco?'): ")
-        
-        print("\n🔍 Resultados:")
-        for patient in self.patients[:10]:  # Limite para demonstração
-            prompt = f"""Dados do paciente:
-            - Nome: {patient.name}
-            - Idade: {patient.age}
-            - Condição: {patient.condition}
-            - Medicação: {patient.medication}
-            - Alergias: {', '.join(patient.allergies) or 'Nenhuma'}
-            
-            Pergunta: {question}"""
-            
-            print(f"\n➡️ Paciente {patient.name} (ID: {patient.id}):")
-            response = self._ask_llm(prompt)
-            print(response or "ℹ️ Sem informações adicionais")
 
-    def _check_medication_interactions(self):
-        """Verifica interações medicamentosas perigosas"""
-        dangerous_interactions = {
-            "Warfarin": ["Aspirin", "Ibuprofen"],
-            "Furosemide": ["Ibuprofen", "Naproxen"],
-            "Metformin": ["Contrast dye"]
-        }
+        print("\n💊 Verirficador de compatibilidade de medicamentos")
+        patient_id = input("ID do paciente (ou 'lista' para ver todos): ").strip()
         
-        print("\n⚠️ VERIFICAÇÃO DE INTERAÇÕES PERIGOSAS")
+        if patient_id.lower() == 'lista':
+            for p in self.patients:  # Mostra apenas os 10 primeiros
+                print(f"ID: {p.id} | {p.name} | Medicação: {p.medication} | Alergias: {', '.join(p.allergies)}")
+            return
+
+        try:
+            patient = next(p for p in self.patients if str(p.id) == patient_id)
+        except StopIteration:
+            print("❌ Paciente não encontrado!")
+            return
+
+        new_med = input(f"\nMedicação a verificar para {patient.name}: ")
         
-        for patient in self.patients:
-            alerts = []
-            med = patient.medication.split()[0]  # Pega o nome principal
+        # Constroi prompt contextualizado
+        prompt = f"""Paciente:
+        - Nome: {patient.name}
+        - Idade: {patient.age}
+        - Condição: {patient.condition}
+        - Medicação Atual: {patient.medication}
+        - Alergias: {', '.join(patient.allergies) or 'Nenhuma'}"""
+
+        print("\n A analisar...\n")
+        response = self._ask_llm(prompt) or self._local_safety_check(patient, new_med)
+        print(response)
+
+        def _check_medication_interactions(self):
+            """Verifica interações medicamentosas perigosas"""
+            dangerous_interactions = {
+                "Warfarin": ["Aspirin", "Ibuprofen"],
+                "Furosemide": ["Ibuprofen", "Naproxen"],
+                "Metformin": ["Contrast dye"]
+            }
             
-            if med in dangerous_interactions:
-                for drug in dangerous_interactions[med]:
-                    if drug in patient.allergies:
-                        alerts.append(f"{med} + {drug}")
+            print("\n⚠️ VERIFICAÇÃO DE INTERAÇÕES PERIGOSAS")
             
-            if alerts:
-                print(f"\n🚨 Paciente {patient.name} (ID: {patient.id}):")
-                print(f"Medicação: {patient.medication}")
-                print(f"Alergias: {', '.join(patient.allergies)}")
-                print("Interações perigosas:", " | ".join(alerts))
+            for patient in self.patients:
+                alerts = []
+                med = patient.medication.split()[0]  # Pega o nome principal
+                
+                if med in dangerous_interactions:
+                    for drug in dangerous_interactions[med]:
+                        if drug in patient.allergies:
+                            alerts.append(f"{med} + {drug}")
+                
+                if alerts:
+                    print(f"\n🚨 Paciente {patient.name} (ID: {patient.id}):")
+                    print(f"Medicação: {patient.medication}")
+                    print(f"Alergias: {', '.join(patient.allergies)}")
+                    print("Interações perigosas:", " | ".join(alerts))
 
 if __name__ == "__main__":
     csv_path = Path(__file__).parent / "fake_patients_en.csv"
