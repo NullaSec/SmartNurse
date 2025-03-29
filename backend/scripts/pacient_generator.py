@@ -40,7 +40,7 @@ MEDICATIONS = [
 patients = []
 num_pac = 100
 
-for _ in range(num_pac):
+for i in range(num_pac):
     # Definir alergias (50% chance de não ter alergias?)
     if random.random() < 0.5:
         allergies = ["None"]
@@ -49,6 +49,7 @@ for _ in range(num_pac):
         allergies = random.sample([a for a in COMMON_ALLERGIES if a != "None"], num_allergies)
     
     patients.append({
+        "Id": i,
         "Name": fake.name(),
         "NIF": fake.ssn(),
         "Age": random.randint(18, 90),
