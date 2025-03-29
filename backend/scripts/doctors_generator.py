@@ -16,7 +16,7 @@ SPECIALTYS = [
 doctors = []
 num_docs = 100
 
-for i in range(num_docs):
+for i in range(1,num_docs+1):
     
     doctors.append({
         "Id": i,

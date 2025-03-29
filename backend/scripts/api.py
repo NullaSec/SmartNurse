@@ -4,7 +4,7 @@ with s2.connect(
     host="svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com",
     port=3333,
     user="guilherme", 
-    password="JBpaDva5sr8SwuvZhNSEynlSOU8ftxSD",
+    password="HDps2V1ziGncqV5BWSEePEROjKWMUzIt",
     database="db_smartnurse"
 ) as conn:
 
