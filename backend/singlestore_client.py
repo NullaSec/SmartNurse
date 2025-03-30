@@ -48,13 +48,12 @@ class SingleStoreMed:
             with self._get_connection() as conn:
                 with conn.cursor() as cursor:
                     query = """
-                        SELECT c.chunk_text, d.nome_arquivo,
-                               DOT_PRODUCT(c.embedding, JSON_ARRAY_PACK(%s)) AS score
-                        FROM pdf_embeddings c
-                        JOIN documentos_pdf d ON c.document_id = d.id
-                        WHERE c.document_id IN %s
-                        ORDER BY score DESC
-                        LIMIT %s
+                        SELECT pdf_embeddings.id, pdf_embeddings.document_id, pdf_embeddings, documentos_pdf.texto_extraido, DOT_PRODUCT(pdf_embaddings.embadding,
+                        CAST('[0.1, 0.2, ..., 0.9] AS FLOAT ARRAY)) AS similarity_score
+                        FROM pdf_embeddings
+                        JOIN documentos_pdf ON pdf_embeddings.document_id = documentos_pdf.id
+                        ORDER BY similarity_score DESC
+                        LIMIT 10
                     """
                     cursor.execute(query, (str(query_embedding), tuple(doc_ids), top_k))
                     

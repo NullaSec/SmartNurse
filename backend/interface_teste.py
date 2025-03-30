@@ -24,7 +24,7 @@ def display_banner():
     ║  Combina:                                ║
     ║  • Árvores de decisão clínica            ║
     ║  • Protocolos médicos (SingleStore)      ║
-    ║  • IA generativa (Gemini 1.5 Flash)      ║
+    ║  • IA generativa (Gemini 2.0 Flash)      ║
     ╚══════════════════════════════════════════╝
     """)
 
