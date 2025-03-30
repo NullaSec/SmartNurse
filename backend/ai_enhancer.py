@@ -24,7 +24,8 @@ class AIEnhancer:
             prompt = f"""
             És um assistente médico e o teu trabalho é fazeres o diagnóstico dos pacientes com base nos ficheiros da especialização que encontrares disponíveis na base de dados.
             Caso não consigas aceder a esses ficheiros usa a tua inteligência para formar uma resposta direta onde indiques o que poderá ser o diagnóstico bem como os cuidados a ter e se necessário ações a tomar.
-
+            Faz respostas de 1 parágrafo.
+            Caso não consigas aceder aos ficheiros não precisas de informar, já vai ter uma secção que informa
             **Diagnóstico do Sistema**:
             - Categoria: {diagnosis['category']}
             - Urgência: {diagnosis['urgency']}
