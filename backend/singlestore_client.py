@@ -47,21 +47,30 @@ class SingleStoreMed:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cursor:
-                    query = """
-                        SELECT pdf_embeddings.id, pdf_embeddings.document_id, pdf_embeddings, documentos_pdf.texto_extraido, DOT_PRODUCT(pdf_embaddings.embadding,
-                        CAST('[0.1, 0.2, ..., 0.9] AS FLOAT ARRAY)) AS similarity_score
+                    # Convertendo o vetor de consulta para um formato adequado
+                    query_embedding_str = ",".join(map(str, query_embedding))
+
+                    query = f"""
+                        SELECT 
+                            pdf_embeddings.id, 
+                            pdf_embeddings.document_id, 
+                            documentos_pdf.texto_extraido, 
+                            DOT_PRODUCT(pdf_embeddings.embedding, ARRAY[{query_embedding_str}]) AS similarity_score
                         FROM pdf_embeddings
                         JOIN documentos_pdf ON pdf_embeddings.document_id = documentos_pdf.id
+                        WHERE pdf_embeddings.document_id IN ({",".join(map(str, doc_ids))})
                         ORDER BY similarity_score DESC
-                        LIMIT 10
+                        LIMIT {top_k}
                     """
-                    cursor.execute(query, (str(query_embedding), tuple(doc_ids), top_k))
-                    
+
+                    cursor.execute(query)
+
                     return [{
-                        'content': row[0],
-                        'source': row[1],
-                        'score': float(row[2])
+                        'content': row[2],  # Texto do documento
+                        'source': row[1],  # ID do documento
+                        'score': float(row[3])  # Similaridade
                     } for row in cursor.fetchall()]
+
         except Exception as e:
             logging.error(f"Vector search failed: {str(e)}")
             return []
