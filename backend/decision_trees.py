@@ -1,276 +1,172 @@
-from typing import Dict, Optional, List
-import re
+import os
+from typing import Dict, List
+import logging
+from dotenv import load_dotenv
+
+# Configuração
+load_dotenv()
+logging.basicConfig(filename='decision_tree.log', level=logging.INFO)
+
+SPECIALTY_MAPPING = {
+    "Cardiology": 1,
+    "Dermatology": 2,
+    "General Surgery": 3,
+    "Gynecology and Obstetrics": 4,
+    "Psychiatry": 5,
+    "Infectious Diseases": 6,
+    "Neurology": 7
+}
 
 class MedicalDecisionTree:
     def __init__(self):
-        self.symptom_categories = {
-            "emergencias": self._evaluate_emergencias,
-            "cardiovascular": self._evaluate_cardio,
-            "neurologico": self._evaluate_neuro,
-            "respiratorio": self._evaluate_resp,
-            "gastrointestinal": self._evaluate_gi,
-            "dermatologico": self._evaluate_derma,
-            "infeccioso": self._evaluate_infeccao,
-            "gineco_obstetrico": self._evaluate_gineco,
-            "geral": self._evaluate_general
+        # Mapeamento completo sintomas->especialidade (inglês e português)
+        self.symptom_map = {
+            # Cardiology / Cardiologia
+            "chest pain": "Cardiology",
+            "dor no peito": "Cardiology",
+            "shortness of breath": "Cardiology",
+            "falta de ar": "Cardiology",
+            "palpitations": "Cardiology",
+            "taquicardia": "Cardiology",
+            "dizziness": "Cardiology",
+            "tontura": "Cardiology",
+            "fainting": "Cardiology",
+            "desmaio": "Cardiology",
+            
+            # Neurology / Neurologia
+            "headache": "Neurology",
+            "dor de cabeça": "Neurology",
+            "seizure": "Neurology",
+            "convulsão": "Neurology",
+            "numbness": "Neurology",
+            "formigamento": "Neurology",
+            
+            # ... (other specialties)
         }
 
-    def evaluate(self, sintomas: str, historico: str = "", idade: Optional[int] = None) -> Dict:
-        sintomas = self._normalize_input(sintomas)
-        historico = self._normalize_input(historico)
+        # Sintomas de alto risco (urgência máxima)
+        self.red_flag_symptoms = {
+            "chest pain": "Possible cardiac event",
+            "dor no peito": "Possível evento cardíaco",
+            "shortness of breath": "Respiratory distress",
+            "falta de ar": "Dificuldade respiratória",
+            "fainting": "Possible syncope",
+            "desmaio": "Possível síncope"
+        }
 
-        for category, evaluator in self.symptom_categories.items():
-            result = evaluator(sintomas, historico, idade)
-            if result:
-                return result
+        # Sintomas pediátricos de alto risco
+        self.pediatric_red_flags = {
+            "chest pain": "Pediatric cardiac concern",
+            "dor no peito": "Problema cardíaco pediátrico",
+            "lethargy": "Pediatric emergency",
+            "letargia": "Emergência pediátrica"
+        }
 
-        return self._fallback_assessment()
+    def _normalize_text(self, text: str) -> str:
+        """Normaliza texto para comparação"""
+        return text.lower().strip()
 
-    def _normalize_input(self, text: str) -> str:
-        text = text.lower()
-        text = re.sub(r'[^\w\s]', '', text)
-        return text
+    def _identify_symptoms(self, text: str) -> Dict[str, int]:
+        """Identifica sintomas e conta ocorrências por especialidade"""
+        normalized_text = self._normalize_text(text)
+        symptom_counts = {specialty: 0 for specialty in SPECIALTY_MAPPING.keys()}
+        
+        for symptom, specialty in self.symptom_map.items():
+            if self._normalize_text(symptom) in normalized_text:
+                symptom_counts[specialty] += 1
+                
+        return symptom_counts
 
-    # ========== MÉTODOS DE AVALIAÇÃO ==========
-
-    def _evaluate_emergencias(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        emergencias_keywords = [
-            "parada cardiaca", "desmaio prolongado", "convulsao",
-            "sangramento incontrolavel", "overdose", "queimadura grave",
-            "falta de ar severa", "trauma craniano"
-        ]
-
-        if any(keyword in sintomas for keyword in emergencias_keywords):
-            return {
-                "categoria": "emergencias",
-                "diagnosticos": ["Emergência médica"],
-                "urgencia": "Altíssima",
-                "encaminhamento": "Pronto-Socorro",
-                "alertas": ["CHAME O SAMU IMEDIATAMENTE - 192"]
-            }
-        return None
-
-    def _evaluate_cardio(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        cardiac_keywords = [
-            "dor no peito", "dor precordial", "palpitacao",
-            "taquicardia", "desmaio", "inchaço nas pernas"
-        ]
-
-        if any(keyword in sintomas for keyword in cardiac_keywords):
-            details = {
-                "categoria": "cardiovascular",
-                "diagnosticos": [],
-                "urgencia": "Alta",
-                "encaminhamento": "Cardiologia",
-                "alertas": []
-            }
-
-            if "dor no peito" in sintomas:
-                if "irradia para o braço" in sintomas:
-                    details["diagnosticos"].append("Infarto Agudo do Miocárdio")
-                    details["alertas"].append("RISCO DE IAM - PRIORIDADE MÁXIMA")
-                elif "piora com esforço" in sintomas:
-                    details["diagnosticos"].append("Angina Pectoris")
-
-            if any(cond in historico for cond in ["hipertensao", "colesterol", "diabetes"]):
-                details["alertas"].append("Paciente com fatores de risco cardiovascular")
-
-            return details
-        return None
-
-    def _evaluate_neuro(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        neuro_keywords = [
-            "cefaleia", "dor de cabeca intensa", "convulsao",
-            "perda de consciencia", "confusao mental", "visao dupla",
-            "fraqueza muscular", "formigamento"
-        ]
-
-        if any(keyword in sintomas for keyword in neuro_keywords):
-            details = {
-                "categoria": "neurologico",
-                "diagnosticos": [],
-                "urgencia": "Alta",
-                "encaminhamento": "Neurologia",
-                "alertas": []
-            }
-
-            if any(palavra in sintomas for palavra in ["dor de cabeca", "cefaleia"]):
-                if "intensa" in sintomas and "repentina" in sintomas:
-                    details["diagnosticos"].append("Hemorragia Subaracnóidea")
-                    details["alertas"].append("Possível aneurisma cerebral - TC URGENTE")
-                elif "vomito" in sintomas and "fotofobia" in sintomas:
-                    details["diagnosticos"].append("Enxaqueca com Aura")
-
-            if "AVC" in historico or "acidente vascular cerebral" in historico:
-                details["alertas"].append("Paciente com histórico de AVC - risco aumentado")
-
-            return details
-        return None
-
-    def _evaluate_resp(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        resp_keywords = [
-            "falta de ar", "dispneia", "tosse com sangue",
-            "sibilo", "dor toracica ao respirar"
-        ]
-
-        if any(keyword in sintomas for keyword in resp_keywords):
-            details = {
-                "categoria": "respiratorio",
-                "diagnosticos": [],
-                "urgencia": "Média",
-                "encaminhamento": "Pneumologia",
-                "alertas": []
-            }
-
-            if "falta de ar" in sintomas:
-                if "esforco" in sintomas:
-                    details["diagnosticos"].append("DPOC" if "tabagismo" in historico else "Asma")
-                elif "repentina" in sintomas:
-                    details["diagnosticos"].append("Tromboembolismo Pulmonar")
-                    details["urgencia"] = "Alta"
-
-            return details
-        return None
-
-    def _evaluate_gi(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        gi_keywords = [
-            "dor abdominal", "vomito", "diarreia",
-            "sangue nas fezes", "ictericia", "azia"
-        ]
-
-        if any(keyword in sintomas for keyword in gi_keywords):
-            details = {
-                "categoria": "gastrointestinal",
-                "diagnosticos": [],
-                "urgencia": "Média",
-                "encaminhamento": "Gastroenterologia",
-                "alertas": []
-            }
-
-            if "dor abdominal" in sintomas:
-                if "quadrante superior direito" in sintomas:
-                    details["diagnosticos"].append("Colecistite")
-                elif "rebote" in sintomas:
-                    details["diagnosticos"].append("Apendicite Aguda")
-                    details["urgencia"] = "Alta"
-
-            return details
-        return None
-
-    def _evaluate_derma(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        derma_keywords = [
-            "erupcao cutanea", "prurido", "lesao na pele",
-            "vermelhidao", "bolhas", "descamacao"
-        ]
-
-        if any(keyword in sintomas for keyword in derma_keywords):
-            details = {
-                "categoria": "dermatologico",
-                "diagnosticos": [],
-                "urgencia": "Baixa",
-                "encaminhamento": "Dermatologia",
-                "alertas": []
-            }
-
-            if any(s in sintomas for s in ["pele descamando", "bolhas extensas"]):
-                details.update({
-                    "diagnosticos": ["Síndrome de Stevens-Johnson (emergência)"],
-                    "urgencia": "Alta",
-                    "alertas": ["INTERNAÇÃO URGENTE - RISCO DE SEPSE"]
-                })
-            elif "erupcao" in sintomas and "febre" in sintomas:
-                details["diagnosticos"].append("Doença exantemática (avaliar vacinação)")
+    def _determine_priority(self, symptoms: List[str], age: int) -> Dict:
+        """Determina urgência e alertas"""
+        urgency = "Medium"
+        alerts = []
+        
+        # Verifica sintomas de alto risco
+        for symptom in symptoms:
+            norm_symptom = self._normalize_text(symptom)
             
-            return details
-        return None
-
-    def _evaluate_infeccao(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        infeccao_keywords = [
-            "febre alta", "calafrios", "sudorese noturna",
-            "linfonodos aumentados", "viagem recente"
-        ]
-
-        if any(keyword in sintomas for keyword in infeccao_keywords):
-            details = {
-                "categoria": "infeccioso",
-                "diagnosticos": [],
-                "urgencia": "Média",
-                "encaminhamento": "Infectologia",
-                "alertas": []
-            }
-
-            if "febre alta" in sintomas and any(s in sintomas for s in ["confusao", "taquicardia"]):
-                details.update({
-                    "diagnosticos": ["Sepse (avaliar SOFA score)"],
-                    "urgencia": "Alta",
-                    "alertas": ["RISCO DE CHOQUE SÉPTICO - INICIAR PROTOCOLO IMEDIATO"]
-                })
-            elif "viagem recente" in historico:
-                details["diagnosticos"].append("Doença tropical (diferencial)")
+            # Prioridade pediátrica
+            if age < 18:
+                for ped_symptom, alert in self.pediatric_red_flags.items():
+                    if self._normalize_text(ped_symptom) in norm_symptom:
+                        urgency = "High"
+                        alerts.append(alert)
             
-            return details
-        return None
+            # Sintomas gerais de alto risco
+            for red_symptom, alert in self.red_flag_symptoms.items():
+                if self._normalize_text(red_symptom) in norm_symptom:
+                    urgency = "High"
+                    alerts.append(alert)
+        
+        return {"urgency": urgency, "alerts": list(set(alerts))}
 
-    def _evaluate_gineco(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        gineco_keywords = [
-            "sangramento vaginal", "dor pelvica", "corrimento",
-            "atraso menstrual", "gravidez", "tpm intensa"
-        ]
-
-        if any(keyword in sintomas for keyword in gineco_keywords):
-            details = {
-                "categoria": "gineco_obstetrico",
-                "diagnosticos": [],
-                "urgencia": "Média",
-                "encaminhamento": "Ginecologia" if "gravidez" not in sintomas else "Obstetrícia",
-                "alertas": []
-            }
-
-            if "gravidez" in historico and any(s in sintomas for s in ["sangramento", "contracoes"]):
-                details.update({
-                    "diagnosticos": ["Ameaça de aborto" if idade < 40 else "Descolamento prematuro"],
-                    "urgencia": "Alta",
-                    "alertas": ["RISCO DE PERDA FETAL - ECOGRAFIA URGENTE"]
-                })
-            elif "dor pelvica intensa" in sintomas:
-                details["diagnosticos"].append("Torção de anexo (diferencial)")
+    def evaluate(self, symptoms: str, medical_history: str = "", age: int = 0) -> Dict:
+        """
+        Avalia sintomas e retorna:
+        {
+            "category": "Specialty",
+            "urgency": "High/Medium/Low",
+            "alerts": ["alert1", "alert2"],
+            "specialty_id": int
+        }
+        """
+        try:
+            # Combina sintomas e histórico para análise
+            combined_input = f"{symptoms} {medical_history}"
             
-            if "corrimento" in sintomas:
-                details["diagnosticos"].append("Vaginose/Candidose (avaliar exames)")
+            # Contagem de sintomas por especialidade
+            symptom_counts = self._identify_symptoms(combined_input)
+            total_symptoms = sum(symptom_counts.values())
             
-            return details
-        return None
-
-    def _evaluate_general(self, sintomas: str, historico: str, idade: int) -> Optional[Dict]:
-        general_keywords = [
-            "febre", "calafrios", "perda de peso",
-            "astenia", "mal estar", "cansaço"
-        ]
-
-        if any(keyword in sintomas for keyword in general_keywords):
-            details = {
-                "categoria": "geral",
-                "diagnosticos": [],
-                "urgencia": "Baixa",
-                "encaminhamento": "Clínico Geral",
-                "alertas": []
+            if total_symptoms == 0:
+                logging.warning(f"No recognized symptoms in: {combined_input}")
+                return self._fallback_response(age)
+            
+            # Determina especialidade principal
+            primary_specialty = max(symptom_counts.items(), key=lambda x: x[1])[0]
+            
+            # Urgência e alertas
+            priority_info = self._determine_priority(
+                symptoms.split(","), 
+                age
+            )
+            
+            # Resposta final
+            response = {
+                "category": primary_specialty,
+                "urgency": priority_info["urgency"],
+                "alerts": priority_info["alerts"],
+                "specialty_id": SPECIALTY_MAPPING[primary_specialty]
             }
+            
+            logging.info(f"Evaluation complete: {response}")
+            return response
+            
+        except Exception as e:
+            logging.error(f"Evaluation error: {str(e)}")
+            return self._fallback_response(age)
 
-            if "febre" in sintomas and "diarreia" in sintomas:
-                details["diagnosticos"].append("Gastroenterite Aguda")
-            elif "febre" in sintomas and "tosse" in sintomas:
-                details["diagnosticos"].append("Pneumonia" if idade > 65 else "Bronquite")
-            elif "cansaço" in sintomas and "perda de peso" in sintomas:
-                details["diagnosticos"].append("Anemia (diferencial)")
-
-            return details
-        return None
-
-    def _fallback_assessment(self) -> Dict:
+    def _fallback_response(self, age: int) -> Dict:
+        """Resposta para casos indeterminados"""
         return {
-            "categoria": "indeterminado",
-            "diagnosticos": ["Avaliação clínica necessária"],
-            "urgencia": "Baixa",
-            "encaminhamento": "Clínico Geral",
-            "alertas": []
+            "category": "General Surgery",
+            "urgency": "High" if age < 18 else "Medium",
+            "alerts": ["Undifferentiated symptoms - needs evaluation"],
+            "specialty_id": SPECIALTY_MAPPING["General Surgery"]
         }
+
+# Testes (executar com pytest -v)
+def test_cardiac_symptoms():
+    tree = MedicalDecisionTree()
+    result = tree.evaluate("dor no peito e falta de ar", age=35)
+    assert result["category"] == "Cardiology"
+    assert result["urgency"] == "High"
+    assert "Possível evento cardíaco" in result["alerts"]
+
+def test_pediatric_case():
+    tree = MedicalDecisionTree()
+    result = tree.evaluate("criança com dor no peito", age=9)
+    assert result["category"] == "Cardiology"
+    assert result["urgency"] == "High"
+    assert "Problema cardíaco pediátrico" in result["alerts"]

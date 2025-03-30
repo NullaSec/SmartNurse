@@ -1,116 +1,149 @@
-from fastapi import FastAPI, HTTPException
-import httpx
-from pydantic import BaseModel
-from typing import Optional
+#!/usr/bin/env python3
+from decision_trees import MedicalDecisionTree
+from singlestore_client import SingleStoreMed
+from ai_enhancer import AIEnhancer
+import os
+import time
+import logging
+from dotenv import load_dotenv
 
-import re
-import json
+# Configuração
+load_dotenv()
+logging.basicConfig(
+    filename='medical_system.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
-app = FastAPI()
+def clear_screen():
+    """Limpa o terminal de forma multiplataforma"""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-# Configurações da LLM (use suas credenciais)
-LLM_URL = "https://apps.aws-virginia-nb2.svc.singlestore.com:8000/modelasaservice/3871e155-3d25-4659-bbd7-5a3a175ae552/v1"
-LLM_KEY = "eyJhbGciOiJFUzUxMiIsImtpZCI6IjhhNmVjNWFmLThlNWEtNDQxOS04NmM4LWRkMDkxN2U1YWNlMSIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsibm92YXB1YmxpYyJdLCJleHAiOjE3NDU4Njc1MzAsIm5iZiI6MTc0MzI3NTUyNSwiaWF0IjoxNzQzMjc1NTMwLCJzdWIiOiJiNWVlY2Q3Ni02NTVlLTQyZGUtODI3YS1kYWEyZjIxMGRiOTciLCJlbWFpbCI6InBmZXJuYW5kZXNAc2luZ2xlc3RvcmUuY29tIiwiaWRwSUQiOiJiNmQ2YTZiZC04NjYyLTQzYjItYjlkZS1hZjNhMjdlMGZhYzgiLCJlbWFpbFZlcmlmaWVkIjp0cnVlLCJzc29TdWJqZWN0IjoiYjVlZWNkNzYtNjU1ZS00MmRlLTgyN2EtZGFhMmYyMTBkYjk3IiwidmFsaWRGb3JQb3J0YWwiOmZhbHNlLCJyZWFkT25seSI6ZmFsc2UsIm5vdmFBcHBJbmZvIjp7InNlcnZpY2VJRCI6IjM4NzFlMTU1LTNkMjUtNDY1OS1iYmQ3LTVhM2ExNzVhZTU1MiIsImFwcElEIjoiOGY2NjkyZTQtMmJjOC00OTM4LTk0NzMtOTYwNjc2Y2YzMDhhIiwiYXBwVHlwZSI6Ik1vZGVsQXNBU2VydmljZSJ9fQ.AYmMgEgEuwOhPzUSMoZY94znBBknkDnlIYnCGMkBESe7JGMNv6ZRLUewzjLALKslYB0Q4p3pihSWNmT3znWqA8kgAC7-GH8oUomLJk0g2VaTLDVyqxNXnFrUF9I5y716oRaHQbomfH2Meb0V6RY3Pz_RSk8w1j9ijA34E0oSSsy4FR1i"
-MODEL_NAME = "unsloth/Meta-Llama-3.1-8B-Instruct"
+def display_banner():
+    """Exibe o banner do sistema"""
+    clear_screen()
+    print("""
+    ╔══════════════════════════════════════════╗
+    ║   SISTEMA DE TRIAGEM MÉDICA AVANÇADA     ║
+    ╠══════════════════════════════════════════╣
+    ║  Combina:                                ║
+    ║  • Árvores de decisão clínica            ║
+    ║  • Protocolos médicos (SingleStore)      ║
+    ║  • IA generativa (Gemini 1.5 Flash)      ║
+    ╚══════════════════════════════════════════╝
+    """)
 
-class SintomasInput(BaseModel):
-    sintomas: str
-    historico: Optional[str] = None
-    idade: Optional[int] = None
-
-@app.post("/pre-diagnostico")
-async def pre_diagnostico(data: SintomasInput):
-    """
-    Endpoint para pré-diagnóstico médico
-    """
-    # Construir o prompt médico
-    prompt = f"""<s>[INST]
-    <<SYS>>
-    Você é um assistente médico. Sua resposta DEVE SER APENAS UM JSON VÁLIDO, SEM NENHUM TEXTO EXTRA.
-    Use este formato EXATO:
-    {{
-    "diagnosticos": [],
-    "urgencia": "",
-    "recomendacao": "",
-    "encaminhamento": ""
-    }}
-    NÃO REPITA O PROMPT!
-    <</SYS>>
-
-    Dados do paciente:
-    - Sintomas: {data.sintomas}
-    - Histórico: {data.historico or 'Não informado'}
-    - Idade: {data.idade or 'Não informada'}
-
-    [/INST]
-    {{"diagnosticos": ["""
+def get_user_input():
+    """Obtém e valida entrada do usuário"""
+    print("\n" + "═"*50)
+    print("ℹ️  Descreva seus sintomas principais (ex: 'dor de cabeça intensa com náuseas')")
+    symptoms = input("> Sintomas: ").strip()
     
-    try:
-        # Construir URL com autenticação
-        url = f"{LLM_URL}/completions?authToken={LLM_KEY}"
-        
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-            url,
-            headers={"Content-Type": "application/json"},
-            json={
-                "model": MODEL_NAME,
-                "prompt": prompt,
-                "temperature": 0.1,  # Reduz para menos variação
-                "max_tokens": 150,   # Suficiente para o JSON
-                "stop": ["</s>"]     # Somente parar no fim do token
-            }
-        )
-            
-            # Debug (opcional)
-            print("Status Code:", response.status_code)
-            print("Resposta LLM:", response.text)
-            
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Erro na LLM: {response.text}"
-                )
-            
-            # Processar resposta
-            resposta = response.json()
-        try:
-            # Extrai o primeiro JSON encontrado
-            json_str = re.search(r'\{.*?\}', conteudo, re.DOTALL).group()
-            # Converte para dict para validar
-            json_data = json.loads(json_str)
-            conteudo = json.dumps(json_data, ensure_ascii=False)
-        except:
-            conteudo = '''{
-                "diagnosticos": ["Erro na extração"],
-                "urgencia": "Alta",
-                "recomendacao": "Contate o suporte técnico",
-                "encaminhamento": "Administração"
-            }'''
-        return {
-            "resultado": conteudo,
-            "status": "sucesso"
-        }
-            
-    except httpx.ReadTimeout:
-        raise HTTPException(
-            status_code=504,
-            detail="Tempo de resposta da LLM excedido"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro interno: {str(e)}"
-        )
+    while len(symptoms.split()) < 3:
+        print("⚠️  Por favor, forneça mais detalhes (mínimo 3 palavras)")
+        symptoms = input("> Sintomas: ").strip()
 
-@app.get("/status")
-async def health_check():
-    return {
-        "status": "online",
-        "versao": "1.0",
-        "llm_conectada": True
-    }
+    print("\nℹ️  Histórico médico relevante (deixe em branco se não souber)")
+    history = input("> Histórico: ").strip() or "Não informado"
+
+    print("\nℹ️  Idade (digite 0 se não quiser informar)")
+    while True:
+        try:
+            age = int(input("> Idade: ") or "0")
+            if age >= 0:
+                break
+            print("⚠️  Idade não pode ser negativa")
+        except ValueError:
+            print("⚠️  Por favor, digite um número válido")
+
+    return symptoms, history, age
+
+def display_results(diagnosis, medical_info, ai_response):
+    """Mostra os resultados formatados"""
+    print("\n" + "═"*50)
+    print("🔍 RESULTADOS DA TRIAGEM")
+    print("═"*50)
+    
+    # Diagnóstico
+    print(f"\n📌 Categoria: {diagnosis['category'].upper()}")
+    print(f"🚨 Nível de Urgência: {diagnosis['urgency']}")
+    
+    if diagnosis['alerts']:
+        print("\n⚠️  ALERTAS CLÍNICOS:")
+        for alert in diagnosis['alerts']:
+            print(f"    • {alert}")
+    
+    # Informações médicas
+    if medical_info['relevant_info']:
+        print("\n📚 INFORMAÇÕES RELEVANTES:")
+        for idx, info in enumerate(medical_info['relevant_info'][:3], 1):
+            print(f"\n{idx}. [Confiança: {info['confidence']}]")
+            print(f"{info['text'][:200]}...")
+    else:
+        print("\nℹ️  Nenhuma informação específica encontrada")
+    
+    # Fontes
+    if medical_info['sources']:
+        print("\n📄 Fontes consultadas:")
+        for source in medical_info['sources']:
+            print(f"  - {os.path.basename(source)}")
+
+    # IA
+    if ai_response:
+        print("\n" + "═"*50)
+        print("🧠 EXPLICAÇÃO DO SISTEMA")
+        print("═"*50)
+        print(f"\n{ai_response}")
+
+    # Recomendação
+    print("\n" + "═"*50)
+    print("⚠️  RECOMENDAÇÃO FINAL")
+    print("═"*50)
+    print(f"\n{medical_info['recommendation']}")
+
+def main():
+    try:
+        # Inicialização
+        display_banner()
+        symptoms, history, age = get_user_input()
+        
+        # Componentes do sistema
+        tree = MedicalDecisionTree()
+        db = SingleStoreMed()
+        ai = AIEnhancer()
+
+        # Processamento
+        print("\n⏳ Analisando sintomas com árvore de decisão...")
+        diagnosis = tree.evaluate(symptoms, history, age)
+        time.sleep(1)  # Feedback visual
+
+        print("⏳ Consultando protocolos médicos...")
+        medical_info = db.get_medical_info(
+            specialty_id=diagnosis['specialty_id'],
+            user_query=symptoms
+        )
+        time.sleep(0.5)
+
+        print("⏳ Gerando explicação com IA...")
+        ai_response = ai.enhance_response(
+            diagnosis=diagnosis,
+            medical_info=medical_info,
+            symptoms=symptoms
+        )
+        time.sleep(0.5)
+
+        # Exibição
+        display_results(diagnosis, medical_info, ai_response)
+
+    except KeyboardInterrupt:
+        print("\n❌ Operação cancelada pelo usuário")
+    except Exception as e:
+        logging.error(f"Erro crítico: {str(e)}", exc_info=True)
+        print(f"\n⚠️  Erro no sistema: {str(e)}")
+    finally:
+        print("\n" + "═"*50)
+        print("ℹ️  Lembre-se: Este sistema não substitui avaliação médica presencial")
+        print("© 2024 Sistema de Triagem Médica - Versão Terminal")
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    main()
