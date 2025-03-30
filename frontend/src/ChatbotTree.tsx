@@ -48,6 +48,28 @@ function ChatbotTree() {
     }
   }, [initialMessageSent]);
 
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/test-connection');
+        const data = await response.json();
+        if (!data.connected) {
+          setMessages([{
+            user: "",
+            bot: "⚠️ Sistema offline: Não foi possível conectar à base de dados médicos. Contate o suporte."
+          }]);
+        }
+      } catch (error) {
+        setMessages([{
+          user: "",
+          bot: "🚨 Erro crítico: O serviço médico está indisponível no momento."
+        }]);
+      }
+    };
+    
+    testConnection();
+  }, []);
+
   const simulateTyping = (response: string, callback?: () => void) => {
     let index = 0;
     const interval = setInterval(() => {

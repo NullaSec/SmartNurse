@@ -28,6 +28,18 @@ class SingleStoreMed:
             logging.error(f"Connection failed: {str(e)}")
             raise
 
+    def test_connection(self):
+        """Testa a conexão com o banco de dados"""
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    result = cursor.fetchone()
+                    return result[0] == 1
+        except Exception as e:
+            logging.error(f"Connection test failed: {str(e)}")
+            return False
+
     def _generate_query_embedding(self, query: str) -> Optional[List[float]]:
         """Gera embedding para a consulta do usuário"""
         try:
@@ -47,18 +59,30 @@ class SingleStoreMed:
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cursor:
-                    query = """
-                        SELECT pdf_embeddings.id, pdf_embeddings.document_id, pdf_embeddings, documentos_pdf.texto_extraido
-                        FROM pdf_embeddings
-                        JOIN documentos_pdf ON pdf_embeddings.document_id = documentos_pdf.id  
+                    # Converter para formato binário do SingleStore
+                    query_embedding_bytes = bytes(np.array(query_embedding, dtype=np.float32).tobytes())
+                    
+                    query = f"""
+                        SELECT 
+                            e.id, 
+                            e.document_id, 
+                            d.texto_extraido,
+                            DOT_PRODUCT(e.embedding, JSON_ARRAY_PACK(%s)) AS similarity
+                        FROM pdf_embeddings e
+                        JOIN documentos_pdf d ON e.document_id = d.id
+                        WHERE d.especialidade_id = %s
+                        ORDER BY similarity DESC
+                        LIMIT %s
                     """
-                    cursor.execute(query, (str(query_embedding), tuple(doc_ids), top_k))
+                    
+                    cursor.execute(query, (str(query_embedding), top_k))
                     
                     return [{
-                        'content': row[0],
+                        'content': row[2],
                         'source': row[1],
-                        'score': float(row[2])
+                        'score': float(row[3])
                     } for row in cursor.fetchall()]
+
         except Exception as e:
             logging.error(f"Vector search failed: {str(e)}")
             return []
