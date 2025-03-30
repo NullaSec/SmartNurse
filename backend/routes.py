@@ -1,21 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from typing import Optional
+from fastapi import APIRouter
 
 router = APIRouter()
 
-class SintomasRequest(BaseModel):
-    sintomas: str
-    # latitude e longitude são opcionais para o MVP inicial
-    latitude: float | None = None
-    longitude: float | None = None
+@router.get("/rota-teste")
+async def rota_teste():
+    return {"mensagem": "Rota GET funcionando"}
 
-@router.post("/triagem")
-async def triagem(request: SintomasRequest):
-    # Resposta mockada (substitua pela LLM depois)
-    resposta_mockada = {
-        "condicoes": ["Enxaqueca", "Desidratação"],
-        "urgencia": "media",
-        "especialidade": "Clínico Geral",
-        "hospitais": []  # A Pessoa 2 preencherá isso depois
-    }
-    return resposta_mockada
+@router.get("/usuario/{user_id}")
+async def ler_usuario(user_id: int, query: Optional[str] = None):
+    return {"user_id": user_id, "query": query}
