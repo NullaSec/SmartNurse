@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "./ChatbotTree.css";
+import "./Chatbot.css";
 
 interface Message {
   user: string;
@@ -16,7 +16,7 @@ function App() {
   useEffect(() => {
     if (!initialMessageSent) {
       const initialMessage =
-        "Olá! Sou o assistente do Smart Diagnosis. Diga-me os seus sintomas e vou tentar ajudá-lo a descobrir o que pode estar por trás.";
+        "Olá! Sou o assistente da Medical School. Pergunta-me sobre qualquer tópico relacionado à medicina e vou tentar ajudá-lo a aprender mais.";
       setMessages([{ user: "", bot: initialMessage }]);
       setInitialMessageSent(true);
     }
@@ -74,18 +74,18 @@ function App() {
       </button>
       <button
         className="diagnosis-button"
-        onClick={() => (window.location.href = "/medSchool")}
+        onClick={() => (window.location.href = "/smartDiag")}
       >
-        MedSchool
+        SmartDiag
       </button>
-      <h1>Smart Diagnosis</h1>
-      <div className="chatbox2">
+      <h1>Medical School</h1>
+      <div className="chatbox">
         <div className="messages">
           {messages.map((msg, idx) => (
             <div key={idx} className="message">
               {msg.user && (
                 <div className="user-message">
-                  <strong>Você: </strong>
+                  <strong>You: </strong>
                   {msg.user}
                 </div>
               )}
@@ -120,7 +120,7 @@ function App() {
               handleSendMessage();
             }
           }}
-          placeholder="Escreve os teus sintomas..."
+          placeholder="Pergunta o que gostarias de saber..."
         />
         <button onClick={handleSendMessage}>➤</button>
       </div>
