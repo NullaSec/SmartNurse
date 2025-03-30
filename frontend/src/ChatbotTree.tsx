@@ -102,8 +102,8 @@ function ChatbotTree() {
             const data: TriageData = await performTriage(input);
             setTriageData(data);
 
-            let botResponse = `🔍 Diagnóstico: ${data.diagnosis.category}\n`;
-            botResponse += `🚨 Nível de Urgência: ${data.diagnosis.urgency}\n\n`;
+            let botResponse = `- Categoria Detetada: ${data.diagnosis.category}\n`;
+            botResponse += `- Classificação de Urgência: ${data.diagnosis.urgency}\n\n`;
 
             if (data.diagnosis.alerts.length > 0) {
               botResponse += "⚠️ Alertas:\n";
@@ -113,7 +113,7 @@ function ChatbotTree() {
               botResponse += "\n";
             }
 
-            botResponse += `📌 Recomendação: ${data.medical_info.recommendation}\n\n`;
+            "botResponse += `📌 Recomendação: ${data.medical_info.recommendation}\n\n`;"
             botResponse += `💡 Explicação:\n${data.ai_explanation}`;
 
             setMessages((prev) => [...prev, { user: "", bot: "" }]);

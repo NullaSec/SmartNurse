@@ -8,100 +8,100 @@ load_dotenv()
 logging.basicConfig(filename='decision_tree.log', level=logging.INFO)
 
 SPECIALTY_MAPPING = {
-    "Cardiology": 1,
-    "Dermatology": 2,
-    "General Surgery": 3,
-    "Gynecology and Obstetrics": 4,
-    "Psychiatry": 5,
-    "Infectious Diseases": 6,
-    "Neurology": 7
+    "Cardiologia": 1,
+    "Dermatologia": 2,
+    "Cirurgia Geral": 3,
+    "Ginecologia e Obstetricia": 4,
+    "Psiquiatria": 5,
+    "Doenças e Infeções": 6,
+    "Neurologia": 7
 }
 
 class MedicalDecisionTree:
     def __init__(self):
         self.symptom_map = {
-            # Cardiology / Cardiologia
-            "chest pain": "Cardiology",
-            "dor no peito": "Cardiology",
-            "shortness of breath": "Cardiology",
-            "falta de ar": "Cardiology",
-            "palpitations": "Cardiology",
-            "taquicardia": "Cardiology",
-            "dizziness": "Cardiology",
-            "tontura": "Cardiology",
-            "fainting": "Cardiology",
-            "desmaio": "Cardiology",
+            # Cardiologia / Cardiologia
+            "chest pain": "Cardiologia",
+            "dor no peito": "Cardiologia",
+            "shortness of breath": "Cardiologia",
+            "falta de ar": "Cardiologia",
+            "palpitations": "Cardiologia",
+            "taquicardia": "Cardiologia",
+            "dizziness": "Cardiologia",
+            "tontura": "Cardiologia",
+            "fainting": "Cardiologia",
+            "desmaio": "Cardiologia",
             
-            # Neurology / Neurologia
-            "headache": "Neurology",
-            "dor de cabeça": "Neurology",
-            "seizure": "Neurology",
-            "convulsão": "Neurology",
-            "numbness": "Neurology",
-            "formigamento": "Neurology",
+            # Neurologia / Neurologia
+            "headache": "Neurologia",
+            "dor de cabeça": "Neurologia",
+            "seizure": "Neurologia",
+            "convulsão": "Neurologia",
+            "numbness": "Neurologia",
+            "formigamento": "Neurologia",
             
-            # Dermatology / Dermatologia
-            "rash": "Dermatology",
-            "erupção cutânea": "Dermatology",
-            "itching": "Dermatology",
-            "coceira": "Dermatology",
-            "skin lesion": "Dermatology",
-            "lesão na pele": "Dermatology",
-            "acne": "Dermatology",
-            "psoriasis": "Dermatology",
-            "psoríase": "Dermatology",
-            "eczema": "Dermatology",
-            "pele seca": "Dermatology",
-            "dry skin": "Dermatology",
+            # Dermatologia / Dermatologia
+            "rash": "Dermatologia",
+            "erupção cutânea": "Dermatologia",
+            "itching": "Dermatologia",
+            "coceira": "Dermatologia",
+            "skin lesion": "Dermatologia",
+            "lesão na pele": "Dermatologia",
+            "acne": "Dermatologia",
+            "psoriasis": "Dermatologia",
+            "psoríase": "Dermatologia",
+            "eczema": "Dermatologia",
+            "pele seca": "Dermatologia",
+            "dry skin": "Dermatologia",
             
-            # General Surgery / Cirurgia Geral
-            "abdominal pain": "General Surgery",
-            "dor abdominal": "General Surgery",
-            "appendicitis": "General Surgery",
-            "apendicite": "General Surgery",
-            "hernia": "General Surgery",
-            "hérnia": "General Surgery",
-            "gallstones": "General Surgery",
-            "pedras na vesícula": "General Surgery",
-            "hemorrhoids": "General Surgery",
-            "hemorroidas": "General Surgery",
+            # Cirurgia Geral / Cirurgia Geral
+            "abdominal pain": "Cirurgia Geral",
+            "dor abdominal": "Cirurgia Geral",
+            "appendicitis": "Cirurgia Geral",
+            "apendicite": "Cirurgia Geral",
+            "hernia": "Cirurgia Geral",
+            "hérnia": "Cirurgia Geral",
+            "gallstones": "Cirurgia Geral",
+            "pedras na vesícula": "Cirurgia Geral",
+            "hemorrhoids": "Cirurgia Geral",
+            "hemorroidas": "Cirurgia Geral",
             
-            # Gynecology and Obstetrics / Ginecologia e Obstetrícia
-            "vaginal bleeding": "Gynecology and Obstetrics",
-            "sangramento vaginal": "Gynecology and Obstetrics",
-            "pregnancy": "Gynecology and Obstetrics",
-            "gravidez": "Gynecology and Obstetrics",
-            "menstrual pain": "Gynecology and Obstetrics",
-            "cólica menstrual": "Gynecology and Obstetrics",
-            "breast pain": "Gynecology and Obstetrics",
-            "dor nos seios": "Gynecology and Obstetrics",
-            "infertility": "Gynecology and Obstetrics",
-            "infertilidade": "Gynecology and Obstetrics",
+            # Ginecologia e Obstetricia / Ginecologia e Obstetrícia
+            "vaginal bleeding": "Ginecologia e Obstetricia",
+            "sangramento vaginal": "Ginecologia e Obstetricia",
+            "pregnancy": "Ginecologia e Obstetricia",
+            "gravidez": "Ginecologia e Obstetricia",
+            "menstrual pain": "Ginecologia e Obstetricia",
+            "cólica menstrual": "Ginecologia e Obstetricia",
+            "breast pain": "Ginecologia e Obstetricia",
+            "dor nos seios": "Ginecologia e Obstetricia",
+            "infertility": "Ginecologia e Obstetricia",
+            "infertilidade": "Ginecologia e Obstetricia",
             
-            # Psychiatry / Psiquiatria
-            "depression": "Psychiatry",
-            "depressão": "Psychiatry",
-            "anxiety": "Psychiatry",
-            "ansiedade": "Psychiatry",
-            "insomnia": "Psychiatry",
-            "insônia": "Psychiatry",
-            "panic attacks": "Psychiatry",
-            "ataques de pânico": "Psychiatry",
-            "hallucinations": "Psychiatry",
-            "alucinações": "Psychiatry",
+            # Psiquiatria / Psiquiatria
+            "depression": "Psiquiatria",
+            "depressão": "Psiquiatria",
+            "anxiety": "Psiquiatria",
+            "ansiedade": "Psiquiatria",
+            "insomnia": "Psiquiatria",
+            "insônia": "Psiquiatria",
+            "panic attacks": "Psiquiatria",
+            "ataques de pânico": "Psiquiatria",
+            "hallucinations": "Psiquiatria",
+            "alucinações": "Psiquiatria",
             
-            # Infectious Diseases / Doenças Infecciosas
-            "fever": "Infectious Diseases",
-            "febre": "Infectious Diseases",
-            "diarrhea": "Infectious Diseases",
-            "diarreia": "Infectious Diseases",
-            "vomiting": "Infectious Diseases",
-            "vômito": "Infectious Diseases",
-            "HIV": "Infectious Diseases",
-            "hepatitis": "Infectious Diseases",
-            "hepatite": "Infectious Diseases",
-            "tuberculosis": "Infectious Diseases",
-            "tuberculose": "Infectious Diseases",
+            # Doenças e Infeções / Doenças Infecciosas
+            "fever": "Doenças e Infeções",
+            "febre": "Doenças e Infeções",
+            "diarrhea": "Doenças e Infeções",
+            "diarreia": "Doenças e Infeções",
+            "vomiting": "Doenças e Infeções",
+            "vômito": "Doenças e Infeções",
+            "HIV": "Doenças e Infeções",
+            "hepatitis": "Doenças e Infeções",
+            "hepatite": "Doenças e Infeções",
+            "tuberculosis": "Doenças e Infeções",
+            "tuberculose": "Doenças e Infeções",
         }
 
         # Sintomas de alto risco (urgência máxima)
@@ -124,7 +124,7 @@ class MedicalDecisionTree:
 
     def _normalize_text(self, text: str) -> str:
         """Normaliza texto para comparação"""
-        return text.lower().strip()
+        return text.Baixaer().strip()
 
     def _identify_symptoms(self, text: str) -> Dict[str, int]:
         """Identifica sintomas e conta ocorrências por especialidade"""
@@ -139,7 +139,7 @@ class MedicalDecisionTree:
 
     def _determine_priority(self, symptoms: List[str], age: int) -> Dict:
         """Determina urgência e alertas"""
-        urgency = "Medium"
+        urgency = "Média"
         alerts = []
         
         # Verifica sintomas de alto risco
@@ -150,13 +150,13 @@ class MedicalDecisionTree:
             if age < 18:
                 for ped_symptom, alert in self.pediatric_red_flags.items():
                     if self._normalize_text(ped_symptom) in norm_symptom:
-                        urgency = "High"
+                        urgency = "Alta"
                         alerts.append(alert)
             
             # Sintomas gerais de alto risco
             for red_symptom, alert in self.red_flag_symptoms.items():
                 if self._normalize_text(red_symptom) in norm_symptom:
-                    urgency = "High"
+                    urgency = "Alta"
                     alerts.append(alert)
         
         return {"urgency": urgency, "alerts": list(set(alerts))}
@@ -166,7 +166,7 @@ class MedicalDecisionTree:
         Avalia sintomas e retorna:
         {
             "category": "Specialty",
-            "urgency": "High/Medium/Low",
+            "urgency": "Alta/Média/Baixa",
             "alerts": ["alert1", "alert2"],
             "specialty_id": int
         }
@@ -210,23 +210,23 @@ class MedicalDecisionTree:
     def _fallback_response(self, age: int) -> Dict:
         """Resposta para casos indeterminados"""
         return {
-            "category": "General Surgery",
-            "urgency": "High" if age < 18 else "Medium",
+            "category": "Cirurgia Geral",
+            "urgency": "Alta" if age < 18 else "Média",
             "alerts": ["Undifferentiated symptoms - needs evaluation"],
-            "specialty_id": SPECIALTY_MAPPING["General Surgery"]
+            "specialty_id": SPECIALTY_MAPPING["Cirurgia Geral"]
         }
 
 # Testes (executar com pytest -v)
 def test_cardiac_symptoms():
     tree = MedicalDecisionTree()
     result = tree.evaluate("dor no peito e falta de ar", age=35)
-    assert result["category"] == "Cardiology"
-    assert result["urgency"] == "High"
+    assert result["category"] == "Cardiologia"
+    assert result["urgency"] == "Alta"
     assert "Possível evento cardíaco" in result["alerts"]
 
 def test_pediatric_case():
     tree = MedicalDecisionTree()
     result = tree.evaluate("criança com dor no peito", age=9)
-    assert result["category"] == "Cardiology"
-    assert result["urgency"] == "High"
+    assert result["category"] == "Cardiologia"
+    assert result["urgency"] == "Alta"
     assert "Problema cardíaco pediátrico" in result["alerts"]
