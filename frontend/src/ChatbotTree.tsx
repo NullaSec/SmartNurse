@@ -194,7 +194,6 @@ function ChatbotTree() {
 
       {triageData && (
         <div className="triage-details">
-          <h3>Fontes consultadas:</h3>
           <ul>
             {triageData.medical_info.sources.map(
               (source: string, idx: number) => (
