@@ -8,22 +8,27 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: -20px;
+    margin-top: -40px;
   }
   
-  .borda {  
+  .borda {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     border: 2px solid #27bad4;
-    border-radius: 30%;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 50%; 
+    padding: 10px;
     margin-bottom: 20px;
-  }
-  
+    width: 250px; 
+    height: 250px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden; ;
+    z-index: 1;
+}
+
   .image-button-container img {
+    position: relative;
     max-width: 90%;
     height: auto;
     margin-bottom: 0px;
@@ -31,8 +36,8 @@
   
   .speech-bubble {
     position: absolute;
-    top: 60px;
-    left: 80%;
+    top: 20%;
+    left: 57%;
     background: #27bad4;
     color: white;
     padding: 15px 50px;
@@ -47,12 +52,13 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+    z-index: 2;
   }
   
   .speech-bubble::after {
     content: "";
     position: absolute;
-    top: 50%;
+    top: 80%;
     right: 100%;
     transform: translateY(-50%);
     border-width: 8px;
@@ -60,6 +66,7 @@
     border-color: transparent #27bad4 transparent transparent;
     outline: none;
     box-shadow: none;
+    z-index: 2;
   }
   
   .speech-bubble-message {
@@ -117,6 +124,31 @@
   }
   
   .chat-button:hover {
+    background-color: #e1b457;
+  }
+
+  .button-container button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px; 
+    width: 150px;
+    height: 150px;
+    background-color: #1a7c8d;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+  }
+  
+  .button-container button img {
+    width: 175px; 
+    height: auto;
+    max-width: none;
+    flex-shrink: 0;
+  }
+  
+  .button-container button:hover {
     background-color: #e1b457;
   }
   

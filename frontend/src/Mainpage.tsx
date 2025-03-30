@@ -26,9 +26,9 @@ function Home() {
         <h1>Welcome to Smart Nurse</h1>
         <div className="borda">
           <img src="./src/bot-image.png" alt="Description" />
-          <div className="speech-bubble">
-            <div className="speech-bubble-message">{message}</div>
-          </div>
+        </div>
+        <div className="speech-bubble">
+          <div className="speech-bubble-message">{message}</div>
         </div>
         <p>Click a button below to start a chatbot.</p>
         <div className="button-container">
@@ -36,13 +36,13 @@ function Home() {
             onClick={() => navigate("/smartDiag")}
             className="chat-button"
           >
-            SmartDiag
+            <img src="./src/SmartDiag.png" alt="SmartDiag" />
           </button>
           <button
             onClick={() => navigate("/medSchool")}
             className="chat-button"
           >
-            MedSchool
+            <img src="./src/medSchool.png" alt="MedSchool" />
           </button>
         </div>
       </div>
