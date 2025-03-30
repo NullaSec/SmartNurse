@@ -19,7 +19,6 @@ SPECIALTY_MAPPING = {
 
 class MedicalDecisionTree:
     def __init__(self):
-        # Mapeamento completo sintomas->especialidade (inglês e português)
         self.symptom_map = {
             # Cardiology / Cardiologia
             "chest pain": "Cardiology",
@@ -41,7 +40,68 @@ class MedicalDecisionTree:
             "numbness": "Neurology",
             "formigamento": "Neurology",
             
-            # ... (other specialties)
+            # Dermatology / Dermatologia
+            "rash": "Dermatology",
+            "erupção cutânea": "Dermatology",
+            "itching": "Dermatology",
+            "coceira": "Dermatology",
+            "skin lesion": "Dermatology",
+            "lesão na pele": "Dermatology",
+            "acne": "Dermatology",
+            "psoriasis": "Dermatology",
+            "psoríase": "Dermatology",
+            "eczema": "Dermatology",
+            "pele seca": "Dermatology",
+            "dry skin": "Dermatology",
+            
+            # General Surgery / Cirurgia Geral
+            "abdominal pain": "General Surgery",
+            "dor abdominal": "General Surgery",
+            "appendicitis": "General Surgery",
+            "apendicite": "General Surgery",
+            "hernia": "General Surgery",
+            "hérnia": "General Surgery",
+            "gallstones": "General Surgery",
+            "pedras na vesícula": "General Surgery",
+            "hemorrhoids": "General Surgery",
+            "hemorroidas": "General Surgery",
+            
+            # Gynecology and Obstetrics / Ginecologia e Obstetrícia
+            "vaginal bleeding": "Gynecology and Obstetrics",
+            "sangramento vaginal": "Gynecology and Obstetrics",
+            "pregnancy": "Gynecology and Obstetrics",
+            "gravidez": "Gynecology and Obstetrics",
+            "menstrual pain": "Gynecology and Obstetrics",
+            "cólica menstrual": "Gynecology and Obstetrics",
+            "breast pain": "Gynecology and Obstetrics",
+            "dor nos seios": "Gynecology and Obstetrics",
+            "infertility": "Gynecology and Obstetrics",
+            "infertilidade": "Gynecology and Obstetrics",
+            
+            # Psychiatry / Psiquiatria
+            "depression": "Psychiatry",
+            "depressão": "Psychiatry",
+            "anxiety": "Psychiatry",
+            "ansiedade": "Psychiatry",
+            "insomnia": "Psychiatry",
+            "insônia": "Psychiatry",
+            "panic attacks": "Psychiatry",
+            "ataques de pânico": "Psychiatry",
+            "hallucinations": "Psychiatry",
+            "alucinações": "Psychiatry",
+            
+            # Infectious Diseases / Doenças Infecciosas
+            "fever": "Infectious Diseases",
+            "febre": "Infectious Diseases",
+            "diarrhea": "Infectious Diseases",
+            "diarreia": "Infectious Diseases",
+            "vomiting": "Infectious Diseases",
+            "vômito": "Infectious Diseases",
+            "HIV": "Infectious Diseases",
+            "hepatitis": "Infectious Diseases",
+            "hepatite": "Infectious Diseases",
+            "tuberculosis": "Infectious Diseases",
+            "tuberculose": "Infectious Diseases",
         }
 
         # Sintomas de alto risco (urgência máxima)

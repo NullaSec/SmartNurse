@@ -22,10 +22,8 @@ class AIEnhancer:
                 )
 
             prompt = f"""
-            Você é um assistente médico. Sintetize estas informações:
-
-            **Sintomas do Paciente**:
-            {symptoms}
+            És um assistente médico e o teu trabalho é fazeres o diagnóstico dos pacientes com base nos ficheiros da especialização que encontrares disponíveis na base de dados.
+            Caso não consigas aceder a esses ficheiros usa a tua inteligência para formar uma resposta direta onde indiques o que poderá ser o diagnóstico bem como os cuidados a ter e se necessário ações a tomar.
 
             **Diagnóstico do Sistema**:
             - Categoria: {diagnosis['category']}
