@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from decision_trees import MedicalDecisionTree
 from singlestore_client import SingleStoreMed
 from ai_enhancer import AIEnhancer
@@ -6,6 +9,7 @@ import os
 import time
 import logging
 from dotenv import load_dotenv
+from typing import Optional
 
 # Configuração
 load_dotenv()
@@ -15,135 +19,75 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-def clear_screen():
-    """Limpa o terminal de forma multiplataforma"""
-    os.system('cls' if os.name == 'nt' else 'clear')
+app = FastAPI()
 
-def display_banner():
-    """Exibe o banner do sistema"""
-    clear_screen()
-    print("""
-    ╔══════════════════════════════════════════╗
-    ║   SISTEMA DE TRIAGEM MÉDICA AVANÇADA     ║
-    ╠══════════════════════════════════════════╣
-    ║  Combina:                                ║
-    ║  • Árvores de decisão clínica            ║
-    ║  • Protocolos médicos (SingleStore)      ║
-    ║  • IA generativa (Gemini 1.5 Flash)      ║
-    ╚══════════════════════════════════════════╝
-    """)
+# Configuração CORS para permitir conexão com o frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # URL do seu Vite
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def get_user_input():
-    """Obtém e valida entrada do usuário"""
-    print("\n" + "═"*50)
-    print("ℹ️  Descreva seus sintomas principais (ex: 'dor de cabeça intensa com náuseas')")
-    symptoms = input("> Sintomas: ").strip()
-    
-    while len(symptoms.split()) < 3:
-        print("⚠️  Por favor, forneça mais detalhes (mínimo 3 palavras)")
-        symptoms = input("> Sintomas: ").strip()
+# Modelo Pydantic para validação dos dados de entrada
+class SymptomsRequest(BaseModel):
+    symptoms: str
+    history: Optional[str] = "Não informado"
+    age: Optional[int] = 0
 
-    print("\nℹ️  Histórico médico relevante (deixe em branco se não souber)")
-    history = input("> Histórico: ").strip() or "Não informado"
+# Inicialização dos componentes (singleton)
+tree = MedicalDecisionTree()
+db = SingleStoreMed()
+ai = AIEnhancer()
 
-    print("\nℹ️  Idade (digite 0 se não quiser informar)")
-    while True:
-        try:
-            age = int(input("> Idade: ") or "0")
-            if age >= 0:
-                break
-            print("⚠️  Idade não pode ser negativa")
-        except ValueError:
-            print("⚠️  Por favor, digite um número válido")
-
-    return symptoms, history, age
-
-def display_results(diagnosis, medical_info, ai_response):
-    """Mostra os resultados formatados"""
-    print("\n" + "═"*50)
-    print("🔍 RESULTADOS DA TRIAGEM")
-    print("═"*50)
-    
-    # Diagnóstico
-    print(f"\n📌 Categoria: {diagnosis['category'].upper()}")
-    print(f"🚨 Nível de Urgência: {diagnosis['urgency']}")
-    
-    if diagnosis['alerts']:
-        print("\n⚠️  ALERTAS CLÍNICOS:")
-        for alert in diagnosis['alerts']:
-            print(f"    • {alert}")
-    
-    # Informações médicas
-    if medical_info['relevant_info']:
-        print("\n📚 INFORMAÇÕES RELEVANTES:")
-        for idx, info in enumerate(medical_info['relevant_info'][:3], 1):
-            print(f"\n{idx}. [Confiança: {info['confidence']}]")
-            print(f"{info['text'][:200]}...")
-    else:
-        print("\nℹ️  Nenhuma informação específica encontrada")
-    
-    # Fontes
-    if medical_info['sources']:
-        print("\n📄 Fontes consultadas:")
-        for source in medical_info['sources']:
-            print(f"  - {os.path.basename(source)}")
-
-    # IA
-    if ai_response:
-        print("\n" + "═"*50)
-        print("🧠 EXPLICAÇÃO DO SISTEMA")
-        print("═"*50)
-        print(f"\n{ai_response}")
-
-    # Recomendação
-    print("\n" + "═"*50)
-    print("⚠️  RECOMENDAÇÃO FINAL")
-    print("═"*50)
-    print(f"\n{medical_info['recommendation']}")
-
-def main():
+@app.post("/api/triage")
+async def perform_triage(request: SymptomsRequest):
+    """Endpoint principal para a triagem médica"""
     try:
-        # Inicialização
-        display_banner()
-        symptoms, history, age = get_user_input()
+        # Validação adicional
+        if len(request.symptoms.split()) < 3:
+            raise HTTPException(status_code=400, detail="Forneça pelo menos 3 palavras para descrever os sintomas")
         
-        # Componentes do sistema
-        tree = MedicalDecisionTree()
-        db = SingleStoreMed()
-        ai = AIEnhancer()
+        if request.age < 0:
+            raise HTTPException(status_code=400, detail="Idade não pode ser negativa")
 
-        # Processamento
-        print("\n⏳ Analisando sintomas com árvore de decisão...")
-        diagnosis = tree.evaluate(symptoms, history, age)
-        time.sleep(1)  # Feedback visual
-
-        print("⏳ Consultando protocolos médicos...")
+        # Processamento (mesma lógica do terminal)
+        diagnosis = tree.evaluate(request.symptoms, request.history, request.age)
         medical_info = db.get_medical_info(
             specialty_id=diagnosis['specialty_id'],
-            user_query=symptoms
+            user_query=request.symptoms
         )
-        time.sleep(0.5)
-
-        print("⏳ Gerando explicação com IA...")
         ai_response = ai.enhance_response(
             diagnosis=diagnosis,
             medical_info=medical_info,
-            symptoms=symptoms
+            symptoms=request.symptoms
         )
-        time.sleep(0.5)
 
-        # Exibição
-        display_results(diagnosis, medical_info, ai_response)
+        # Formata a resposta para o frontend
+        return {
+            "diagnosis": {
+                "category": diagnosis['category'],
+                "urgency": diagnosis['urgency'],
+                "alerts": diagnosis.get('alerts', [])
+            },
+            "medical_info": {
+                "relevant_info": medical_info['relevant_info'][:3],  # Limita a 3 itens
+                "sources": [os.path.basename(s) for s in medical_info['sources']],
+                "recommendation": medical_info['recommendation']
+            },
+            "ai_explanation": ai_response,
+            "status": "success"
+        }
 
-    except KeyboardInterrupt:
-        print("\n❌ Operação cancelada pelo usuário")
     except Exception as e:
-        logging.error(f"Erro crítico: {str(e)}", exc_info=True)
-        print(f"\n⚠️  Erro no sistema: {str(e)}")
-    finally:
-        print("\n" + "═"*50)
-        print("ℹ️  Lembre-se: Este sistema não substitui avaliação médica presencial")
-        print("© 2024 Sistema de Triagem Médica - Versão Terminal")
+        logging.error(f"Erro na triagem: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/health")
+async def health_check():
+    """Endpoint para verificar se a API está online"""
+    return {"status": "healthy", "version": "1.0"}
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
